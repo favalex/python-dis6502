@@ -153,26 +153,18 @@ class M_ABSY(AddrBase):
 
 class M_ADDR(AddrBase):
     size = 4
-    def __repr__(self):
-        return hx(self.addr, 4)
 
 class M_ZERO(AddrBase):
     size = 2
-    def __repr__(self):
-        return hx(self.addr)
 
 class M_ZERX(AddrBase):
     size = 2
-    def __repr__(self):
-        return hx(self.addr) + ',X'
 
     def to_string(self, addr, memory):
         return super(M_ZERX, self).to_string(addr, memory) + ',X'
 
 class M_ZERY(AddrBase):
     size = 2
-    def __repr__(self):
-        return hx(self.addr) + ',Y'
 
     def to_string(self, addr, memory):
         return super(M_ZERY, self).to_string(addr, memory) + ',Y'
