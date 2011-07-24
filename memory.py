@@ -90,6 +90,18 @@ class Memory(object):
 
         self.executable_ranges = Ranges()
         self.annotations = defaultdict(set)
+        self.symbols = {
+            0x00: 'VSYNC',
+            0x01: 'VBLANK',
+            0x02: 'WSYNC',
+            0x09: 'COLUBK',
+            0x0a: 'CTRLPF',
+            0x12: 'RESM0',
+            0x16: 'AUDC1',
+            0x18: 'AUDF1',
+            0x1a: 'AUDV1',
+            0x2c: 'CXCLR',
+        }
 
     @classmethod
     def from_file(cls, file_name, org):
