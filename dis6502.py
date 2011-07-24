@@ -83,19 +83,33 @@ def instrs(memory, addr, check_memory_type=False):
 def analyze_executable_memory(memory, start_addr):
     to_be_explored = []
 
-    # TODO mark addresses as jump destinations
-    # TODO mark addresses as read/written to
-
     for addr, instr in instrs(memory, start_addr):
+        # memory access
+        if instr.opcode.src == M_ADDR:
+            memory.annotate(instr.src.addr, 'r')
+
+        if instr.opcode.dst == M_ADDR:
+            memory.annotate(instr.dst.addr, 'w')
+
+        # jumps and branches
         if instr.opcode.src == M_REL:  # branches
-            to_be_explored.append(addr + instr.opcode.size + instr.src.offset)
+            memory.annotate(addr, 'B')
+            dest_addr = addr + instr.opcode.size + instr.src.offset
+            memory.annotate(dest_addr, 'T')
+            to_be_explored.append(dest_addr)
         elif instr.opcode.dst == M_PC:
             if instr.opcode.mnemonic == 'JSR':
+                memory.annotate(instr.src.addr, 'J')
                 to_be_explored.append(instr.src.addr)
             elif instr.opcode.mnemonic == 'JMP':
+                memory.annotate(addr, 'R')
+                memory.annotate(instr.src.addr, 'J')
                 to_be_explored.append(instr.src.addr)
                 break
             else:
+                if instr.opcode.mnemonic in ('RTS', 'RTI'):
+                    memory.annotate(addr, 'R')
+
                 break
 
     memory.add_executable_range(start_addr, addr)
@@ -115,7 +129,7 @@ if __name__ == '__main__':
     memory = Memory.from_file(sys.argv[1], 0xf000)
     analyze_executable_memory(memory, 0xf000)
 
-    print memory.executable_ranges.to_string()
+    print memory.to_string()
 
     # for addr, bytes_, instr in dis(open(sys.argv[1]).read(101)):
     #     print hex(addr), dump(bytes_), instr

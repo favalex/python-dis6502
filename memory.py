@@ -15,6 +15,8 @@
 
 # -*- coding: utf-8 -*-
 
+from collections import defaultdict
+
 import sys
 
 class Ranges(object):
@@ -80,22 +82,6 @@ class Ranges(object):
 
         f.close()
 
-    def to_string(self, width=128):
-        size = self.size()
-
-        addr = 0xf000
-        offset = 0
-
-        result = ''
-        while offset <= size:
-            if offset and not offset % width:
-                result += '\n'
-
-            result += 'x' if self.contains(addr+offset) else ' '
-            offset += 1
-
-        return result
-
 class Memory(object):
     def __init__(self, memory, org):
         self.memory = memory
@@ -103,6 +89,7 @@ class Memory(object):
         self.end = self.start + len(memory)
 
         self.executable_ranges = Ranges()
+        self.annotations = defaultdict(set)
 
     @classmethod
     def from_file(cls, file_name, org):
@@ -119,3 +106,38 @@ class Memory(object):
 
     def is_addr_executable(self, addr):
         return self.executable_ranges.contains(addr)
+
+    def annotate(self, addr, kind):
+        self.annotations[addr].add(kind)
+
+    def to_string(self, width=128):
+        addr = self.start
+        result = ''
+        while addr <= self.end:
+            offset = addr - self.start
+            if offset and not offset % width:
+                result += '\n'
+
+            marker = '.' if self.executable_ranges.contains(addr) else ' '
+
+            ann = self.annotations[addr]
+            if 'J' in ann: # jumped to
+                marker = '>'
+            elif 'B' in ann: # branched from
+                marker = '/'
+            elif 'T' in ann: # branched to
+                marker = '\\'
+            elif 'R' in ann: # end of execution (RTS or JMP)
+                marker = '|'
+            elif 'r' in ann and 'w' in ann: # read from and written to
+                marker = '*'
+            elif 'r' in ann: # read from
+                marker = 'r'
+            elif 'w' in ann: # written to
+                marker = 'w'
+
+            result += marker
+
+            addr += 1
+
+        return result
