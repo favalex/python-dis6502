@@ -114,27 +114,32 @@ class Memory(object):
         addr = self.start
         result = ''
         while addr <= self.end:
-            offset = addr - self.start
-            if offset and not offset % width:
-                result += '\n'
-
             marker = '.' if self.executable_ranges.contains(addr) else ' '
 
             ann = self.annotations[addr]
             if 'J' in ann: # jumped to
                 marker = '>'
+            elif 'R' in ann: # end of execution (RTS or JMP)
+                marker = 'T' if 'T' in ann else '|'
             elif 'B' in ann: # branched from
                 marker = '/'
             elif 'T' in ann: # branched to
                 marker = '\\'
-            elif 'R' in ann: # end of execution (RTS or JMP)
-                marker = '|'
             elif 'r' in ann and 'w' in ann: # read from and written to
                 marker = '*'
             elif 'r' in ann: # read from
                 marker = 'r'
             elif 'w' in ann: # written to
                 marker = 'w'
+
+            # a pound to highlight code ending in data without a JMP or RTS
+            # most likely a problem in our tracing algorithm
+            if marker == ' ' and result[-1] not in ('|', 'T', ' '):
+                marker = '#'
+
+            offset = addr - self.start
+            if offset and not offset % width:
+                result += '\n'
 
             result += marker
 
