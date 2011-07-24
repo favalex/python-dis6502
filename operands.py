@@ -19,18 +19,6 @@ def hx(x, size=2):
     fmt = '$%%0%dX' % size
     return fmt % x
 
-class M_ABS(object):
-    def __init__(self, **kwargs):
-        pass
-
-class M_ABSX(object):
-    def __init__(self, **kwargs):
-        pass
-
-class M_ABSY(object):
-    def __init__(self, **kwargs):
-        pass
-
 class M_AC(object):
     def __init__(self, **kwargs):
         pass
@@ -57,13 +45,6 @@ class M_YR(object):
 
     def __repr__(self):
         return ''
-
-class M_ADDR(object):
-    def __init__(self, **kwargs):
-        self.addr = kwargs['addr']
-
-    def __repr__(self):
-        return hx(self.addr, 4)
 
 class M_AIND(object):
     def __init__(self, **kwargs):
@@ -106,11 +87,11 @@ class M_IMM(object):
 
 class M_INDX(object):
     def __init__(self, **kwargs):
-        pass
+        self.offset = kwargs['offset']
 
 class M_INDY(object):
     def __init__(self, **kwargs):
-        pass
+        self.offset = kwargs['offset']
 
 class M_NONE(object):
     def __init__(self, **kwargs):
@@ -139,6 +120,18 @@ class M_REL(object):
     def __repr__(self):
         return '.%+d' % self.offset
 
+    def to_string(self, addr, memory):
+        addr += self.offset + 2
+
+        try:
+            return memory.symbols[addr]
+        except KeyError:
+            annotations = memory.annotations[addr]
+            if 'J' in  annotations or 'T' in annotations:
+                return 'L%04X' % addr
+            else:
+                return hx(addr, 4)
+
 class M_SP(object):
     def __init__(self, **kwargs):
         pass
@@ -150,24 +143,52 @@ class M_SR(object):
     def __init__(self, **kwargs):
         pass
 
-class M_ZERO(object):
+class AddrBase(object):
     def __init__(self, **kwargs):
         self.addr = kwargs['addr']
 
+    def to_string(self, addr, memory):
+        try:
+            return memory.symbols[self.addr]
+        except KeyError:
+            annotations = memory.annotations[self.addr]
+            if 'J' in  annotations or 'T' in annotations:
+                fmt = 'L%%0%dX' % self.size
+                return fmt % self.addr
+            else:
+                return hx(self.addr, self.size)
+
+class M_ABS(AddrBase):
+    size = 4
+
+class M_ABSX(AddrBase):
+    size = 4
+
+class M_ABSY(AddrBase):
+    size = 4
+
+class M_ADDR(AddrBase):
+    size = 4
+    def __repr__(self):
+        return hx(self.addr, 4)
+
+class M_ZERO(AddrBase):
+    size = 2
     def __repr__(self):
         return hx(self.addr)
 
-class M_ZERX(object):
-    def __init__(self, **kwargs):
-        self.addr = kwargs['addr']
-
+class M_ZERX(AddrBase):
+    size = 2
     def __repr__(self):
         return hx(self.addr) + ',X'
 
-class M_ZERY(object):
-    def __init__(self, **kwargs):
-        self.addr = kwargs['addr']
+    def to_string(self, addr, memory):
+        return super(M_ZERX, self).to_string(addr, memory) + ',X'
 
+class M_ZERY(AddrBase):
+    size = 2
     def __repr__(self):
         return hx(self.addr) + ',Y'
 
+    def to_string(self, addr, memory):
+        return super(M_ZERY, self).to_string(addr, memory) + ',Y'
