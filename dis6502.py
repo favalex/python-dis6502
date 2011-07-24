@@ -91,6 +91,20 @@ def analyze_executable_memory(memory, start_addr):
         if instr.opcode.dst == M_ADDR:
             memory.annotate(instr.dst.addr, 'w')
 
+        if instr.opcode.dst in (M_ZERO, M_ZERX, M_ZERY):
+            if instr.dst.addr in (0x15, 0x16, 0x18, 0x1a):
+                memory.annotate(addr, 'O')
+            #celif instr.dst.addr in (0x1b, 0x1c): # moving objects
+            #    memory.annotate(addr, '*')
+            else:
+                memory.annotate(addr, '_')
+
+        if instr.opcode.src in (M_ZERO, M_ZERX, M_ZERY):
+            if instr.src.addr in (0x3c,): # input
+                memory.annotate(addr, '*')
+            else:
+                memory.annotate(addr, '_')
+
         # jumps and branches
         if instr.opcode.src == M_REL:  # branches
             memory.annotate(addr, 'B')

@@ -131,6 +131,12 @@ class Memory(object):
                 marker = 'r'
             elif 'w' in ann: # written to
                 marker = 'w'
+            elif 'O' in ann: # audio
+                marker = 'O'
+            elif '*' in ann:
+                marker = '*'
+            elif '_' in ann:
+                marker = '_'
 
             # a pound to highlight code ending in data without a JMP or RTS
             # most likely a problem in our tracing algorithm
