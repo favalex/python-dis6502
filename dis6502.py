@@ -119,24 +119,52 @@ def analyze_executable_memory(memory, start_addr):
             analyze_executable_memory(memory, dest_addr)
 
 def dis(memory, addr):
-    for addr, instr in instrs(memory, addr, check_memory_type=True):
-        if 'T' in memory.annotations[addr] or 'J' in memory.annotations[addr]:
-            print 'L%s:' % hex(addr)[2:].upper(),
-        else:
-            print '      ',
+    while addr < memory.end:
+        for addr, instr in instrs(memory, addr, check_memory_type=True):
+            if 'T' in memory.annotations[addr] or 'J' in memory.annotations[addr]:
+                print 'L%04X:' % addr,
+            else:
+                print '      ',
 
-        print instr.opcode.mnemonic, '  ',
+            print instr.opcode.mnemonic, '  ',
 
-        src = str(instr.src)
-        if src:
-            print src,
+            try:
+                instr.src.to_string
+            except AttributeError:
+                src = str(instr.src)
+            else:
+                src = instr.src.to_string(addr, memory)
 
-        print instr.dst,
+            if src:
+                print src,
+            else:
+                try:
+                    instr.dst.to_string
+                except AttributeError:
+                    dst = str(instr.dst)
+                else:
+                    dst = instr.dst.to_string(addr, memory)
 
-        print
+                print dst,
 
-        if instr.opcode.mnemonic in ('RTS', 'RTI'):
             print
+
+            if instr.opcode.mnemonic in ('RTS', 'RTI'):
+                print
+
+        addr += instr.opcode.size
+
+        while addr < memory.end and not memory.is_addr_executable(addr):
+            annotations = memory.annotations[addr]
+
+            if 'r' in annotations or 'w' in annotations:
+                print 'L%04X: .byte' % addr,
+            else:
+                print ',',
+
+            print '$%02X' % memory[addr],
+
+            addr += 1
 
 if __name__ == '__main__':
     import sys
