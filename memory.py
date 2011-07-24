@@ -118,9 +118,9 @@ class Memory(object):
 
             ann = self.annotations[addr]
             if 'J' in ann: # jumped to
-                marker = '>'
+                marker = '['
             elif 'R' in ann: # end of execution (RTS or JMP)
-                marker = 'T' if 'T' in ann else '|'
+                marker = 'T' if 'T' in ann else ']'
             elif 'B' in ann: # branched from
                 marker = '/'
             elif 'T' in ann: # branched to
@@ -134,7 +134,7 @@ class Memory(object):
 
             # a pound to highlight code ending in data without a JMP or RTS
             # most likely a problem in our tracing algorithm
-            if marker == ' ' and result[-1] not in ('|', 'T', ' '):
+            if marker == ' ' and result[-1] not in (']', 'T', ' '):
                 marker = '#'
 
             offset = addr - self.start
