@@ -17,6 +17,7 @@
 
 from collections import namedtuple
 
+from memory import Memory
 from operands import *
 
 Opcode = namedtuple('Opcode', 'mnemonic src dst cycles size')
@@ -46,65 +47,46 @@ def Op(**kwargs):
 Instruction = namedtuple('Instruction', 'opcode src dst')
 Line = namedtuple('Line', 'label instruction comment')
 
-def dis_instruction(opcode, bytes_, ip=0):
+def dis_instruction(memory, addr):
+    from table import TABLE
+
+    opcode = TABLE[memory[addr]]
+
     kwargs = {}
 
     if addr_mode_in(opcode, M_ADDR, M_ABS, M_ABSX, M_ABSY):
-        kwargs['addr'] = (ord(bytes_[ip+2]) << 8) + ord(bytes_[ip+1])
+        kwargs['addr'] = memory.get_word(addr+1)
     elif addr_mode_in(opcode, M_IMM):
-        kwargs['immed'] = ord(bytes_[ip+1])
+        kwargs['immed'] = memory[addr+1]
     elif addr_mode_in(opcode, M_INDX, M_INDY, M_REL):
-        kwargs['offset'] = ord(bytes_[ip+1])
+        kwargs['offset'] = memory[addr+1]
     elif addr_mode_in(opcode, M_ZERO, M_ZERX, M_ZERY):
-        kwargs['addr'] = ord(bytes_[ip+1])
+        kwargs['addr'] = memory[addr+1]
 
     return Instruction(opcode=opcode, src=opcode.src(**kwargs), dst=opcode.dst(**kwargs))
 
 def dump(bytes_):
     return ' '.join(hex(ord(byte)) for byte in bytes_)
 
-def instrs(bytes_, org=0xf000, start=None):
-    from table import TABLE
+def instrs(memory, addr, check_memory_type=False):
+    if addr is None:
+        addr = memory.start
 
-    if start is None:
-        start = org
+    while addr < memory.end:
+        if check_memory_type and not memory.is_addr_executable(addr):
+            break
 
-    offset = start - org
-    while offset < len(bytes_):
-        opcode = TABLE[ord(bytes_[offset])]
-        yield org+offset, dis_instruction(opcode, bytes_, offset)
-        offset += opcode.size
+        instr = dis_instruction(memory, addr)
+        yield addr, instr
+        addr += instr.opcode.size
 
-class Ranges(object):
-    def __init__(self):
-        self.ranges = []
-
-    def __iter__(self):
-        return iter(self.ranges)
-
-    def add(self, start, end):
-        self.ranges.append((start, end))  # FIXME merge
-
-    def contains(self, addr):
-        for start, end in self.ranges:
-            if addr >= start and addr <= end:
-                return True
-
-        return False
-
-# TODO encapsulate bytes in a class bytes+org, and accessors with addr instead of/together with offsets
-# TODO class to hold ranges
-# operations add a range (performs merge)
-#            operator in
-def follow_execution_path(bytes_, org=0xf000, start=0xf000, executable_ranges=None):
-    if executable_ranges is None:
-        executable_ranges = Ranges()
-
+def analyze_executable_memory(memory, start_addr):
     to_be_explored = []
 
     # TODO mark addresses as jump destinations
+    # TODO mark addresses as read/written to
 
-    for addr, instr in instrs(bytes_, org=org, start=start):
+    for addr, instr in instrs(memory, start_addr):
         if instr.opcode.src == M_REL:  # branches
             to_be_explored.append(addr + instr.opcode.size + instr.src.offset)
         elif instr.opcode.dst == M_PC:
@@ -116,27 +98,24 @@ def follow_execution_path(bytes_, org=0xf000, start=0xf000, executable_ranges=No
             else:
                 break
 
-    executable_ranges.add(start, addr)
-
-    # print instr.opcode.mnemonic, hex(instr.src.addr), executable_ranges.contains(instr.src.addr)
+    memory.add_executable_range(start_addr, addr)
 
     for dest_addr in to_be_explored:
-        if not executable_ranges.contains(dest_addr):
-            follow_execution_path(bytes_, org=org, start=dest_addr, executable_ranges=executable_ranges)
+        if not memory.is_addr_executable(dest_addr):
+            analyze_executable_memory(memory, dest_addr)
 
-    return executable_ranges
-
-def dis(bytes_, org=0xf000):
-    for addr, instr in instrs(bytes_, org=org):
-        offset = addr - org
-        bs = bytes_[offset:offset+instr.opcode.size] # FIXME avoid copying
+def dis(memory, addr):
+    for addr, instr in instrs(memory, addr):
+        bs = memory[addr:addr+instr.opcode.size] # FIXME avoid copying
         yield addr, bs, instr
 
 if __name__ == '__main__':
     import sys
 
-    for range_ in follow_execution_path(open(sys.argv[1]).read()):
-        print map(hex, range_)
+    memory = Memory.from_file(sys.argv[1], 0xf000)
+    analyze_executable_memory(memory, 0xf000)
+
+    print memory.executable_ranges.to_string()
 
     # for addr, bytes_, instr in dis(open(sys.argv[1]).read(101)):
     #     print hex(addr), dump(bytes_), instr
