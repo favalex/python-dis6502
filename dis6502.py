@@ -85,10 +85,10 @@ def analyze_executable_memory(memory, start_addr):
 
     for addr, instr in instrs(memory, start_addr):
         # memory access
-        if instr.opcode.src == M_ADDR:
+        if instr.opcode.src in (M_ADDR, M_ABSX, M_ABSY):
             memory.annotate(instr.src.addr, 'r')
 
-        if instr.opcode.dst == M_ADDR:
+        if instr.opcode.dst in (M_ADDR, M_ABSX, M_ABSY):
             memory.annotate(instr.dst.addr, 'w')
 
         # jumps and branches
