@@ -119,9 +119,24 @@ def analyze_executable_memory(memory, start_addr):
             analyze_executable_memory(memory, dest_addr)
 
 def dis(memory, addr):
-    for addr, instr in instrs(memory, addr):
-        bs = memory[addr:addr+instr.opcode.size] # FIXME avoid copying
-        yield addr, bs, instr
+    for addr, instr in instrs(memory, addr, check_memory_type=True):
+        if 'T' in memory.annotations[addr] or 'J' in memory.annotations[addr]:
+            print 'L%s:' % hex(addr)[2:].upper(),
+        else:
+            print '      ',
+
+        print instr.opcode.mnemonic, '  ',
+
+        src = str(instr.src)
+        if src:
+            print src,
+
+        print instr.dst,
+
+        print
+
+        if instr.opcode.mnemonic in ('RTS', 'RTI'):
+            print
 
 if __name__ == '__main__':
     import sys
@@ -131,5 +146,4 @@ if __name__ == '__main__':
 
     print memory.to_string()
 
-    # for addr, bytes_, instr in dis(open(sys.argv[1]).read(101)):
-    #     print hex(addr), dump(bytes_), instr
+    dis(memory, 0xf000)
