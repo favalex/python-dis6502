@@ -122,15 +122,7 @@ class M_REL(object):
 
     def to_string(self, addr, memory):
         addr += self.offset + 2
-
-        try:
-            return memory.symbols[addr]
-        except KeyError:
-            annotations = memory.annotations[addr]
-            if 'J' in  annotations or 'T' in annotations:
-                return 'L%04X' % addr
-            else:
-                return hx(addr, 4)
+        return memory.addr_label(addr)
 
 class M_SP(object):
     def __init__(self, **kwargs):
@@ -148,15 +140,7 @@ class AddrBase(object):
         self.addr = kwargs['addr']
 
     def to_string(self, addr, memory):
-        try:
-            return memory.symbols[self.addr]
-        except KeyError:
-            annotations = memory.annotations[self.addr]
-            if 'J' in  annotations or 'T' in annotations:
-                fmt = 'L%%0%dX' % self.size
-                return fmt % self.addr
-            else:
-                return hx(self.addr, self.size)
+        return memory.addr_label(self.addr)
 
 class M_ABS(AddrBase):
     size = 4

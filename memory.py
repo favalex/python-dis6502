@@ -122,6 +122,16 @@ class Memory(object):
     def annotate(self, addr, kind):
         self.annotations[addr].add(kind)
 
+    def addr_label(self, addr):
+        try:
+            return self.symbols[addr]
+        except KeyError:
+            annotations = self.annotations[addr]
+            if 'J' in  annotations or 'T' in annotations:
+                return 'L%04X' % addr
+            else:
+                return '$%04X' % addr
+
     def to_string(self, width=128):
         addr = self.start
         result = ''
