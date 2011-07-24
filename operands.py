@@ -15,10 +15,6 @@
 
 # -*- coding: utf-8 -*-
 
-def hx(x, size=2):
-    fmt = '$%%0%dX' % size
-    return fmt % x
-
 class M_AC(object):
     def __init__(self, **kwargs):
         pass
@@ -83,7 +79,7 @@ class M_IMM(object):
         self.immed = kwargs['immed']
 
     def __repr__(self):
-        return '#%s' % hx(self.immed)
+        return '#$%02X' % self.immed
 
 class M_INDX(object):
     def __init__(self, **kwargs):
