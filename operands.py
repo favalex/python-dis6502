@@ -41,13 +41,22 @@ class M_AC(object):
     def __repr__(self):
         return "A"
 
+    def __str__(self):
+        return ''
+
 class M_XR(object):
     def __init__(self, **kwargs):
         pass
 
+    def __repr__(self):
+        return ''
+
 class M_YR(object):
     def __init__(self, **kwargs):
         pass
+
+    def __repr__(self):
+        return ''
 
 class M_ADDR(object):
     def __init__(self, **kwargs):
@@ -64,17 +73,29 @@ class M_FC(object):
     def __init__(self, **kwargs):
         pass
 
+    def __repr__(self):
+        return ''
+
 class M_FD(object):
     def __init__(self, **kwargs):
         pass
+
+    def __repr__(self):
+        return ''
 
 class M_FI(object):
     def __init__(self, **kwargs):
         pass
 
+    def __repr__(self):
+        return ''
+
 class M_FV(object):
     def __init__(self, **kwargs):
         pass
+
+    def __repr__(self):
+        return ''
 
 class M_IMM(object):
     def __init__(self, **kwargs):
@@ -105,6 +126,9 @@ class M_PC(object):
     def __init__(self, **kwargs):
         pass
 
+    def __repr__(self):
+        return ''
+
 class M_REL(object):
     def __init__(self, **kwargs):
         self.offset = kwargs['offset']
@@ -118,6 +142,9 @@ class M_REL(object):
 class M_SP(object):
     def __init__(self, **kwargs):
         pass
+
+    def __repr__(self):
+        return ''
 
 class M_SR(object):
     def __init__(self, **kwargs):
