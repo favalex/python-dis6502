@@ -146,7 +146,7 @@ class Memory(object):
 
             # a pound to highlight code ending in data without a JMP or RTS
             # most likely a problem in our tracing algorithm
-            if marker == ' ' and result[-1] not in (']', 'T', ' '):
+            if marker == ' ' and result[-1] not in (']', 'T', ' ', 'r', 'w'):
                 marker = '#'
 
             offset = addr - self.start
