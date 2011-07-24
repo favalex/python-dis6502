@@ -15,6 +15,10 @@
 
 # -*- coding: utf-8 -*-
 
+def hx(x, size=2):
+    fmt = '$%%0%dX' % size
+    return fmt % x
+
 class M_ABS(object):
     def __init__(self, **kwargs):
         pass
@@ -50,7 +54,7 @@ class M_ADDR(object):
         self.addr = kwargs['addr']
 
     def __repr__(self):
-        return hex(self.addr)
+        return hx(self.addr, 4)
 
 class M_AIND(object):
     def __init__(self, **kwargs):
@@ -77,7 +81,7 @@ class M_IMM(object):
         self.immed = kwargs['immed']
 
     def __repr__(self):
-        return '#%s' % hex(self.immed)
+        return '#%s' % hx(self.immed)
 
 class M_INDX(object):
     def __init__(self, **kwargs):
@@ -108,6 +112,9 @@ class M_REL(object):
         if self.offset >= 128:
             self.offset -= 256
 
+    def __repr__(self):
+        return '.%+d' % self.offset
+
 class M_SP(object):
     def __init__(self, **kwargs):
         pass
@@ -121,13 +128,19 @@ class M_ZERO(object):
         self.addr = kwargs['addr']
 
     def __repr__(self):
-        return hex(self.addr)
+        return hx(self.addr)
 
 class M_ZERX(object):
     def __init__(self, **kwargs):
-        pass
+        self.addr = kwargs['addr']
+
+    def __repr__(self):
+        return hx(self.addr) + ',X'
 
 class M_ZERY(object):
     def __init__(self, **kwargs):
-        pass
+        self.addr = kwargs['addr']
+
+    def __repr__(self):
+        return hx(self.addr) + ',Y'
 
