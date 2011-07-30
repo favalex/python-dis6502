@@ -145,10 +145,15 @@ def dis(memory):
             if src:
                 print src,
             else:
+                if instr.opcode.mnemonic in 'ADC AND ASL BIT CMP CPX CPY DEC EOR INC JMP LDA LDX LDY LSR ORA ROL ROR SBC STA STX STY':
+                    stringer = repr
+                else:
+                    stringer = str
+
                 try:
                     instr.dst.to_string
                 except AttributeError:
-                    dst = str(instr.dst)
+                    dst = stringer(instr.dst)
                 else:
                     dst = instr.dst.to_string(addr, memory)
 
