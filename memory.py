@@ -27,6 +27,7 @@ class Ranges(object):
         return iter(self.ranges)
 
     def add(self, start, end):
+        # merge the new range with existing ones, if possible
         for i, (s, e) in enumerate(self.ranges):
             if start >= s and start <= e:
                 if end <= e:
@@ -46,41 +47,6 @@ class Ranges(object):
                 return True
 
         return False
-
-    def size(self, page_size=4096):
-        "Rounded to page size"
-
-        min_ = sys.maxint
-        max_ = 0
-
-        for s, e in self.ranges:
-            min_ = min(min_, s)
-            max_ = max(max_, e)
-
-        pages, rem = divmod(max_ - min_, page_size)
-
-        if rem:
-            pages += 1
-
-        return pages*page_size
-
-    def to_ppm(self, file_name, width=64):
-        size = self.size()
-
-        f = open(file_name, 'wb')
-
-        f.write('P6\n')
-        f.write('%s %s\n' % (width, size/width))
-        f.write('255\n')
-
-        addr = 0xf000
-        offset = 0
-
-        while offset <= size:
-            f.write(chr(255 if self.contains(addr+offset) else 0))
-            offset += 1
-
-        f.close()
 
 class Memory(object):
     def __init__(self, memory, org, symbols=None):
