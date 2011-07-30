@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 # Copyright (c) 2011, Gabriele Favalessa
 #
 # This program is free software: you can redistribute it and/or modify
@@ -118,10 +119,14 @@ def analyze_executable_memory(memory, start_addr):
         if not memory.is_addr_executable(dest_addr):
             analyze_executable_memory(memory, dest_addr)
 
-def dis(memory, addr):
+def dis(memory):
+    addr = memory.start
     while addr < memory.end:
+        instr = None
         for addr, instr in instrs(memory, addr, check_memory_type=True):
-            if 'T' in memory.annotations[addr] or 'J' in memory.annotations[addr]:
+            if memory.symbols.has_key(addr):
+                print '%s:' % memory.symbols[addr],
+            elif 'T' in memory.annotations[addr] or 'J' in memory.annotations[addr]:
                 print 'L%04X:' % addr,
             else:
                 print '      ',
@@ -152,7 +157,8 @@ def dis(memory, addr):
             if instr.opcode.mnemonic in ('RTS', 'RTI'):
                 print
 
-        addr += instr.opcode.size
+        if instr:
+            addr += instr.opcode.size
 
         while addr < memory.end and not memory.is_addr_executable(addr):
             annotations = memory.annotations[addr]
@@ -166,12 +172,45 @@ def dis(memory, addr):
 
             addr += 1
 
-if __name__ == '__main__':
-    import sys
+def smart_int(s):
+    if s.startswith('0x'):
+        return int(s[2:], 16)
 
-    memory = Memory.from_file(sys.argv[1], 0xf000)
-    analyze_executable_memory(memory, 0xf000)
+    if s.startswith('$'):
+        return int(s[1:], 16)
+
+    return int(s)
+
+def parse_args():
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Disassemble an Atari 2600 ROM")
+
+    parser.add_argument('romfile', type=argparse.FileType('r'))
+    parser.add_argument('--org', default=0xf000, type=smart_int)
+    parser.add_argument('--code', type=smart_int, nargs='*')
+
+    return parser.parse_args()
+
+if __name__ == '__main__':
+    args = parse_args()
+
+    memory = Memory.from_file(args.romfile, args.org)
+
+    start = memory.get_word(0xfffc)
+    memory.add_symbol(start, 'START')
+
+    analyze_executable_memory(memory, start)
+
+    for start in args.code:
+        analyze_executable_memory(memory, start)
 
     print memory.to_string()
 
-    dis(memory, 0xf000)
+    for value, symbol in memory.symbols.items():
+        print "%s = $%04X" % (symbol, value)
+
+    print "       ORG $%04X" % memory.start
+    print
+
+    dis(memory)

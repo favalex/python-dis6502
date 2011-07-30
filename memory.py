@@ -83,14 +83,20 @@ class Ranges(object):
         f.close()
 
 class Memory(object):
-    def __init__(self, memory, org):
+    def __init__(self, memory, org, symbols=None):
         self.memory = memory
         self.start = org
         self.end = self.start + len(memory)
 
         self.executable_ranges = Ranges()
         self.annotations = defaultdict(set)
-        self.symbols = {
+
+        if symbols is None:
+            self.symbols = {}
+        else:
+            self.symbols = symbols.copy()
+
+        self.symbols.update({
             0x00: 'VSYNC',
             0x01: 'VBLANK',
             0x02: 'WSYNC',
@@ -101,11 +107,11 @@ class Memory(object):
             0x18: 'AUDF1',
             0x1a: 'AUDV1',
             0x2c: 'CXCLR',
-        }
+        })
 
     @classmethod
-    def from_file(cls, file_name, org):
-        return cls(open(file_name).read(), org)
+    def from_file(cls, file_, org, symbols=None):
+        return cls(file_.read(), org, symbols=symbols)
 
     def __getitem__(self, addr):
         return ord(self.memory[addr-self.start])
@@ -122,15 +128,19 @@ class Memory(object):
     def annotate(self, addr, kind):
         self.annotations[addr].add(kind)
 
-    def addr_label(self, addr):
+    def add_symbol(self, addr, symbol):
+        self.symbols[addr] = symbol
+
+    def addr_label(self, addr, size=4):
         try:
             return self.symbols[addr]
         except KeyError:
             annotations = self.annotations[addr]
+            fmt = '%%0%dX' % size
             if 'J' in  annotations or 'T' in annotations:
-                return 'L%04X' % addr
+                return 'L' + (fmt % addr)
             else:
-                return '$%04X' % addr
+                return '$' + (fmt % addr)
 
     def to_string(self, width=128):
         addr = self.start
@@ -156,7 +166,7 @@ class Memory(object):
 
             # a pound to highlight code ending in data without a JMP or RTS
             # most likely a problem in our tracing algorithm
-            if marker == ' ' and result[-1] not in (']', 'T', ' ', 'r', 'w'):
+            if result and marker == ' ' and result[-1] not in (']', 'T', ' ', 'r', 'w'):
                 marker = '#'
 
             offset = addr - self.start
