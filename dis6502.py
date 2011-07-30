@@ -20,7 +20,6 @@ from collections import namedtuple
 
 import atari2600
 
-from memory import Memory
 from operands import *
 
 Opcode = namedtuple('Opcode', 'mnemonic src dst cycles size')
@@ -220,7 +219,7 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
 
-    memory = Memory.from_file(args.romfile, args.org, atari2600.symbols)
+    memory = atari2600.Memory.from_file(args.romfile)
 
     start = memory.get_word(memory.end - 4)
     memory.add_symbol(start, 'START')

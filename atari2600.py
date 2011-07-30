@@ -15,6 +15,8 @@
 
 # -*- coding: utf-8 -*-
 
+import memory
+
 symbols = {
     0x00: 'VSYNC',
     0x01: 'VBLANK',
@@ -67,3 +69,13 @@ symbols = {
     0x0295: 'TIM8T',
     0x0296: 'TIM64T',
 }
+
+class Memory(memory.Memory):
+    @classmethod
+    def from_file(cls, file_, org=None, symbols=None):
+        memory = file_.read()
+
+        if org is None:
+            org = 0xf000 & ((ord(memory[-3]) << 8) + ord(memory[-4]))
+
+        return cls(memory, org, symbols=symbols)
