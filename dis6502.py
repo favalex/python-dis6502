@@ -202,8 +202,9 @@ if __name__ == '__main__':
 
     analyze_executable_memory(memory, start)
 
-    for start in args.code:
-        analyze_executable_memory(memory, start)
+    if args.code:
+        for start in args.code:
+            analyze_executable_memory(memory, start)
 
     print memory.to_string()
 
