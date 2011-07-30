@@ -164,17 +164,34 @@ def dis(memory):
         if instr:
             addr += instr.opcode.size
 
+
+        bytes_on_current_line = 0
         while addr < memory.end and not memory.is_addr_executable(addr):
             annotations = memory.annotations[addr]
 
             if 'r' in annotations or 'w' in annotations:
-                print 'L%04X: .byte' % addr,
+                if bytes_on_current_line > 0:
+                    bytes_on_current_line = 0
+                    print
+
+                print 'L%04X .byt' % addr,
             else:
-                print ',',
+                if bytes_on_current_line > 16:
+                    print
+                    bytes_on_current_line = 0
+
+                if bytes_on_current_line == 0:
+                    print '       .byt',
+                else:
+                    print ',',
 
             print '$%02X' % memory[addr],
 
             addr += 1
+            bytes_on_current_line += 1
+
+        if bytes_on_current_line > 0:
+            print
 
 def smart_int(s):
     if s.startswith('0x'):
