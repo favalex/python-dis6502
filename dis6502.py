@@ -222,7 +222,7 @@ if __name__ == '__main__':
 
     memory = Memory.from_file(args.romfile, args.org, atari2600.symbols)
 
-    start = memory.get_word(0xfffc)
+    start = memory.get_word(memory.end - 4)
     memory.add_symbol(start, 'START')
 
     analyze_executable_memory(memory, start)
