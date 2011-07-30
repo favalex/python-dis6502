@@ -193,6 +193,8 @@ def parse_args():
     parser.add_argument('romfile', type=argparse.FileType('r'))
     parser.add_argument('--org', default=0xf000, type=smart_int)
     parser.add_argument('--code', type=smart_int, nargs='*')
+    parser.add_argument('--memory_dump', '-m', default=False, type=bool)
+    parser.add_argument('--disassemble', '-d', default=True, type=bool)
 
     return parser.parse_args()
 
@@ -210,12 +212,17 @@ if __name__ == '__main__':
         for start in args.code:
             analyze_executable_memory(memory, start)
 
-    print memory.to_string()
+    if args.memory_dump:
+        print memory.to_string()
 
-    for value, symbol in memory.symbols.items():
-        print "%s = $%04X" % (symbol, value)
+    if args.disassemble:
+        for value, symbol in memory.symbols.items():
+            if value < memory.start:
+                print "%s = $%04X" % (symbol, value)
 
-    print "       ORG $%04X" % memory.start
-    print
+        print "       * = $%04X" % memory.start
+        print
 
-    dis(memory)
+        print '    code'
+
+        dis(memory)
