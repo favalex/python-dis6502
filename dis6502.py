@@ -124,9 +124,9 @@ def dis(memory):
         instr = None
         for addr, instr in instrs(memory, addr, check_memory_type=True):
             if memory.symbols.has_key(addr):
-                print '%s:' % memory.symbols[addr],
+                print '%s' % memory.symbols[addr],
             elif 'T' in memory.annotations[addr] or 'J' in memory.annotations[addr]:
-                print 'L%04X:' % addr,
+                print 'L%04X' % addr,
             else:
                 print '      ',
 
@@ -151,6 +151,8 @@ def dis(memory):
                     instr.dst.to_string
                 except AttributeError:
                     dst = stringer(instr.dst)
+                    if dst == 'A':
+                        dst = ''
                 else:
                     dst = instr.dst.to_string(addr, memory)
 
