@@ -147,8 +147,28 @@ class M_ABS(AddrBase):
 class M_ABSX(AddrBase):
     size = 4
 
+    def __repr__(self):
+        s = super(M_ABSX, self).__repr__()
+
+        return s + ',X'
+
+    def to_string(self, addr, memory):
+        s = super(M_ABSX, self).__repr__()
+
+        return s + ',X'
+
 class M_ABSY(AddrBase):
     size = 4
+
+    def __repr__(self):
+        s = super(M_ABSY, self).__repr__()
+
+        return s + ',Y'
+
+    def to_string(self, addr, memory):
+        s = super(M_ABSY, self).__repr__()
+
+        return s + ',Y'
 
 class M_ADDR(AddrBase):
     size = 4
