@@ -221,14 +221,15 @@ if __name__ == '__main__':
 
     memory = atari2600.Memory.from_file(args.romfile)
 
-    start = memory.get_word(memory.end - 4)
-    memory.add_symbol(start, 'START')
 
-    analyze_executable_memory(memory, start)
+    starts = [memory.get_word(memory.end - 4)]
+    memory.add_symbol(starts[0], 'START')
 
     if args.code:
-        for start in args.code:
-            analyze_executable_memory(memory, start)
+        starts.extend(args.code)
+
+    for start in starts:
+        analyze_executable_memory(memory, start)
 
     if args.memory_dump:
         print memory.to_string()
