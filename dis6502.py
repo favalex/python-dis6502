@@ -126,7 +126,7 @@ def dis(memory):
             if memory.symbols.has_key(addr):
                 print '%s' % memory.symbols[addr],
             elif 'T' in memory.annotations[addr] or 'J' in memory.annotations[addr]:
-                print 'L%04X' % addr,
+                print 'L%04X ' % addr,
             else:
                 print '      ',
 
@@ -176,7 +176,7 @@ def dis(memory):
                     bytes_on_current_line = 0
                     print
 
-                print 'L%04X .byt' % addr,
+                print 'L%04X  .byt' % addr,
             else:
                 if bytes_on_current_line > 16:
                     print
