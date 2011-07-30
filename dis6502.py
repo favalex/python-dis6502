@@ -18,6 +18,8 @@
 
 from collections import namedtuple
 
+import atari2600
+
 from memory import Memory
 from operands import *
 
@@ -195,7 +197,7 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
 
-    memory = Memory.from_file(args.romfile, args.org)
+    memory = Memory.from_file(args.romfile, args.org, atari2600.symbols)
 
     start = memory.get_word(0xfffc)
     memory.add_symbol(start, 'START')
