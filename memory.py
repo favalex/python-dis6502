@@ -144,7 +144,7 @@ class Memory(object):
 
     def to_string(self, width=128):
         addr = self.start
-        result = ''
+        result = '%4X: ' % addr
         while addr <= self.end:
             marker = '.' if self.executable_ranges.contains(addr) else ' '
 
@@ -172,6 +172,7 @@ class Memory(object):
             offset = addr - self.start
             if offset and not offset % width:
                 result += '\n'
+                result += '%04X: ' % addr
 
             result += marker
 
