@@ -68,9 +68,6 @@ def dis_instruction(memory, addr):
 
     return Instruction(opcode=opcode, src=opcode.src(**kwargs), dst=opcode.dst(**kwargs))
 
-def dump(bytes_):
-    return ' '.join(hex(ord(byte)) for byte in bytes_)
-
 def instrs(memory, addr, check_memory_type=False):
     if addr is None:
         addr = memory.start
