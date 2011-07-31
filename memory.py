@@ -80,6 +80,9 @@ class Memory(object):
     def add_executable_range(self, start, end):
         self.executable_ranges.add(start, end)
 
+    def has_addr(self, addr):
+        return addr >= self.start and addr <= self.end
+
     def is_addr_executable(self, addr):
         return self.executable_ranges.contains(addr)
 

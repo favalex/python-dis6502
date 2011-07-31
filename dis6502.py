@@ -84,46 +84,57 @@ def instrs(memory, addr, check_memory_type=False):
         yield addr, instr
         addr += instr.opcode.size
 
-def analyze_executable_memory(memory, start_addr):
-    to_be_explored = []
+def analyze_executable_memory(memory, starts):
+    seen_starts = set()
 
-    for addr, instr in instrs(memory, start_addr):
-        # memory access
-        if instr.opcode.src in (M_ADDR, M_ABSX, M_ABSY):
-            memory.annotate(instr.src.addr, 'r')
+    while starts:
+        next_starts = set()
 
-        if instr.opcode.dst in (M_ADDR, M_ABSX, M_ABSY):
-            memory.annotate(instr.dst.addr, 'w')
+        for start in starts:
+            seen_starts.add(start)
 
-        # jumps and branches
-        if instr.opcode.src == M_REL:  # branches
-            memory.annotate(addr, 'B')
-            dest_addr = addr + instr.opcode.size + instr.src.offset
-            memory.annotate(dest_addr, 'T')
-            to_be_explored.append(dest_addr)
-        elif instr.opcode.dst == M_PC:
-            if instr.opcode.mnemonic == 'JSR':
-                memory.annotate(instr.src.addr, 'J')
-                to_be_explored.append(instr.src.addr)
-                memory.add_call(addr, instr.src.addr)
-            elif instr.opcode.mnemonic == 'JMP':
-                memory.annotate(addr, 'R')
-                memory.annotate(addr, 'M')
-                memory.annotate(instr.src.addr, 'J')
-                to_be_explored.append(instr.src.addr)
-                memory.add_jump(addr, instr.src.addr)
-                break
-            else:
-                if instr.opcode.mnemonic in ('RTS', 'RTI'):
-                    memory.annotate(addr, 'R')
+            for addr, instr in instrs(memory, start):
+                # memory access
+                if instr.opcode.src in (M_ADDR, M_ABSX, M_ABSY):
+                    memory.annotate(instr.src.addr, 'r')
 
-                break
+                if instr.opcode.dst in (M_ADDR, M_ABSX, M_ABSY):
+                    memory.annotate(instr.dst.addr, 'w')
 
-    memory.add_executable_range(start_addr, addr)
+                # jumps and branches
+                if instr.opcode.src == M_REL:  # branches
+                    memory.annotate(addr, 'B')
+                    dest_addr = addr + instr.opcode.size + instr.src.offset
+                    memory.annotate(dest_addr, 'T')
+                    if memory.has_addr(dest_addr) and not dest_addr in seen_starts:
+                        next_starts.add(dest_addr)
+                elif instr.opcode.dst == M_PC:
+                    if instr.opcode.mnemonic == 'JSR':
+                        memory.annotate(instr.src.addr, 'J')
+                        if memory.has_addr(instr.src.addr) and not instr.src.addr in seen_starts:
+                            next_starts.add(instr.src.addr)
+                        memory.add_call(addr, instr.src.addr)
+                    elif instr.opcode.mnemonic == 'JMP':
+                        memory.annotate(addr, 'R')
 
-    for dest_addr in to_be_explored:
-        if not memory.is_addr_executable(dest_addr):
-            analyze_executable_memory(memory, dest_addr)
+                        if instr.opcode.src != M_AIND:
+                            memory.annotate(addr, 'M')
+
+                            memory.annotate(instr.src.addr, 'J')
+                            if memory.has_addr(instr.src.addr) and not instr.src.addr in seen_starts:
+                                next_starts.add(instr.src.addr)
+                            memory.add_jump(addr, instr.src.addr)
+
+                        break
+                    else:
+                        if instr.opcode.mnemonic in ('RTS', 'RTI'):
+                            memory.annotate(addr, 'R')
+
+                        break
+
+            memory.add_executable_range(start, addr)
+
+        starts = next_starts
 
 def dis(memory):
     addr = memory.start
@@ -245,8 +256,7 @@ if __name__ == '__main__':
     if args.code:
         starts.extend(args.code)
 
-    for start in starts:
-        analyze_executable_memory(memory, start)
+    analyze_executable_memory(memory, starts)
 
     if args.memory_dump:
         print memory.to_string()
