@@ -249,12 +249,15 @@ if __name__ == '__main__':
     logging.info('Loaded memory %r' % memory)
 
     starts = [memory.get_word(memory.end - 4)]
-    memory.add_symbol(starts[0], 'START')
 
     logging.info('Automatically found and supplied starts are %r' % map(hex, starts))
 
     if args.code:
         starts.extend(args.code)
+
+    memory.add_symbol(starts[0], 'START')
+    for start in starts[1:]:
+        memory.add_symbol(start, 'L%04X' % start)
 
     analyze_executable_memory(memory, starts)
 
