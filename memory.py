@@ -106,11 +106,12 @@ class Memory(object):
             return self.symbols[addr]
         except KeyError:
             annotations = self.annotations[addr]
-            fmt = '%%0%dX' % size
-            if 'J' in  annotations or 'T' in annotations:
-                return 'L' + (fmt % addr)
+            if size == 2:
+                return '$%02X' % addr
+            elif self.has_addr(addr):
+                return 'L%04X' % addr
             else:
-                return '$' + (fmt % addr)
+                return '$%04X' % addr
 
     def to_string(self, width=128):
         addr = self.start
