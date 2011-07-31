@@ -17,7 +17,7 @@
 
 import memory
 
-symbols = {
+SYMBOLS = {
     0x00: 'VSYNC',
     0x01: 'VBLANK',
     0x02: 'WSYNC',
@@ -78,4 +78,9 @@ class Memory(memory.Memory):
         if org is None:
             org = 0xf000 & ((ord(memory[-3]) << 8) + ord(memory[-4]))
 
-        return cls(memory, org, symbols=symbols)
+        syms = SYMBOLS
+
+        if symbols:
+            syms.update(symbols)
+
+        return cls(memory, org, symbols=syms)

@@ -69,7 +69,7 @@ class Memory(object):
         return cls(file_.read(), org, symbols=symbols)
 
     def __repr__(self):
-        return '<Memory start=%X end=%X>' % (self.start, self.end)
+        return '<Memory start=%X end=%X, symbols=%d>' % (self.start, self.end, len(self.symbols))
 
     def __getitem__(self, addr):
         return ord(self.memory[addr-self.start])
