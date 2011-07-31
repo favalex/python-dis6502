@@ -100,10 +100,13 @@ def analyze_executable_memory(memory, start_addr):
             if instr.opcode.mnemonic == 'JSR':
                 memory.annotate(instr.src.addr, 'J')
                 to_be_explored.append(instr.src.addr)
+                memory.add_call(addr, instr.src.addr)
             elif instr.opcode.mnemonic == 'JMP':
                 memory.annotate(addr, 'R')
+                memory.annotate(addr, 'M')
                 memory.annotate(instr.src.addr, 'J')
                 to_be_explored.append(instr.src.addr)
+                memory.add_jump(addr, instr.src.addr)
                 break
             else:
                 if instr.opcode.mnemonic in ('RTS', 'RTI'):
@@ -213,6 +216,7 @@ def parse_args():
     parser.add_argument('--code', type=smart_int, nargs='*')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--memory_dump', '-m', default=False, action='store_true')
+    group.add_argument('--call_graph', '-c', default=False, action='store_true')
     group.add_argument('--disassemble', '-d', default=False, action='store_true')
 
     return parser.parse_args()
@@ -246,3 +250,6 @@ if __name__ == '__main__':
         print '    code'
 
         dis(memory)
+
+    if args.call_graph:
+        memory.call_graph(*starts)

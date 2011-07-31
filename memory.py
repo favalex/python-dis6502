@@ -56,6 +56,8 @@ class Memory(object):
 
         self.executable_ranges = Ranges()
         self.annotations = defaultdict(set)
+        self.calls = {}
+        self.jumps = {}
 
         if symbols is None:
             self.symbols = {}
@@ -81,8 +83,17 @@ class Memory(object):
     def annotate(self, addr, kind):
         self.annotations[addr].add(kind)
 
+    def addr_is(self, addr, *kind):
+        return set(kind) & self.annotations[addr]
+
     def add_symbol(self, addr, symbol):
         self.symbols[addr] = symbol
+
+    def add_call(self, from_addr, to_addr):
+        self.calls[from_addr] = to_addr
+
+    def add_jump(self, from_addr, to_addr):
+        self.jumps[from_addr] = to_addr
 
     def addr_label(self, addr, size=4):
         try:
@@ -132,3 +143,47 @@ class Memory(object):
             addr += 1
 
         return result
+
+    def routine_of_addr(self, addr):
+        while addr >= self.start:
+            if self.addr_label(addr) == 'START':
+                return 'START'
+
+            if self.addr_is(addr, 'J'):
+                return self.addr_label(addr)
+
+            addr -= 1
+
+        return 'UNKNOWN'
+
+    def call_graph(self, *starts):
+        print 'digraph G {'
+
+        seen_starts = set()
+
+        while starts:
+            next_starts = set()
+
+            for start in starts:
+                seen_starts.add(start)
+
+                start_label = self.addr_label(start)
+                addr = start
+                while not self.addr_is(addr, 'R'):
+                    if self.calls.has_key(addr):
+                        dest_addr = self.calls[addr]
+                        if not dest_addr in seen_starts:
+                            next_starts.add(dest_addr)
+                        print ' ', start_label, '->', self.addr_label(dest_addr), ';'
+
+                    addr += 1
+
+                if self.addr_is(addr, 'M'):
+                    dest_addr = self.jumps[addr]
+                    if not dest_addr in seen_starts:
+                        next_starts.add(dest_addr)
+                    print ' ', start_label, '->', self.addr_label(dest_addr), ';'
+
+            starts = next_starts
+
+        print '}'
