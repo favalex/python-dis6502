@@ -39,7 +39,7 @@ def addr_mode_in(opcode, *modes):
 def Op(**kwargs):
     size = 1
 
-    if addr_mode_in(kwargs, M_ADDR, M_ABS, M_ABSX, M_ABSY):
+    if addr_mode_in(kwargs, M_ADDR, M_ABS, M_ABSX, M_ABSY, M_AIND):
         size += 2
     elif addr_mode_in(kwargs, M_IMM, M_INDX, M_INDY, M_REL, M_ZERO, M_ZERX, M_ZERY):
         size += 1
@@ -54,11 +54,14 @@ Line = namedtuple('Line', 'label instruction comment')
 def dis_instruction(memory, addr):
     from table import TABLE
 
-    opcode = TABLE[memory[addr]]
+    try:
+        opcode = TABLE[memory[addr]]
+    except KeyError:
+        raise ValueError('Unknown opcode %02X at addr %04X' % (memory[addr], addr))
 
     kwargs = {}
 
-    if addr_mode_in(opcode, M_ADDR, M_ABS, M_ABSX, M_ABSY):
+    if addr_mode_in(opcode, M_ADDR, M_ABS, M_ABSX, M_ABSY, M_AIND):
         kwargs['addr'] = memory.get_word(addr+1)
     elif addr_mode_in(opcode, M_IMM):
         kwargs['immed'] = memory[addr+1]

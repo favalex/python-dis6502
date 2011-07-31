@@ -112,8 +112,9 @@ class M_NONE(object):
         return ''
 
 class M_AIND(object):
+    """JMP ($00A2)"""
     def __init__(self, **kwargs):
-        pass
+        self.addr = kwargs['addr']
 
 class M_REL(object):
     def __init__(self, **kwargs):
