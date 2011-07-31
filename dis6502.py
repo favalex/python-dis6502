@@ -217,7 +217,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Disassemble an Atari 2600 ROM")
 
     parser.add_argument('romfile', type=argparse.FileType('r'))
-    parser.add_argument('--loglevel', default='warn', action='store', choices=('debug', 'info', 'warn', 'error', 'critical'))
+    parser.add_argument('--loglevel', default='warn', action='store', choices=('debug', 'info', 'warn'))
     parser.add_argument('--org', default=0xf000, type=smart_int)
     parser.add_argument('--code', type=smart_int, nargs='*')
     group = parser.add_mutually_exclusive_group(required=True)
@@ -230,10 +230,8 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
 
-    numeric_level = getattr(logging, args.loglevel.upper(), None)
-    if not isinstance(numeric_level, int):
-        raise ValueError('Invalid log level: %s' % loglevel)
-    logging.basicConfig(level=numeric_level, format='%(levelname)s:%(message)s')
+    logging.basicConfig(level=getattr(logging, args.loglevel.upper()),
+                        format='%(levelname)s:%(message)s')
 
     memory = atari2600.Memory.from_file(args.romfile)
 
