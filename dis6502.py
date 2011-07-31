@@ -211,8 +211,9 @@ def parse_args():
     parser.add_argument('romfile', type=argparse.FileType('r'))
     parser.add_argument('--org', default=0xf000, type=smart_int)
     parser.add_argument('--code', type=smart_int, nargs='*')
-    parser.add_argument('--memory_dump', '-m', default=False, type=bool)
-    parser.add_argument('--disassemble', '-d', default=True, type=bool)
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('--memory_dump', '-m', default=False, action='store_true')
+    group.add_argument('--disassemble', '-d', default=False, action='store_true')
 
     return parser.parse_args()
 
