@@ -222,6 +222,11 @@ def smart_int(s):
 
     return int(s)
 
+def pair(s):
+    symbol, value = s.split('=')
+
+    return symbol, smart_int(value)
+
 def parse_args():
     import argparse
 
@@ -231,6 +236,7 @@ def parse_args():
     parser.add_argument('--loglevel', default='warn', action='store', choices=('debug', 'info', 'warn'))
     parser.add_argument('--org', default=0xf000, type=smart_int)
     parser.add_argument('--code', type=smart_int, nargs='*')
+    parser.add_argument('--symbol', type=pair, nargs='*')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--memory_dump', '-m', default=False, action='store_true')
     group.add_argument('--call_graph', '-c', default=False, action='store_true')
@@ -245,6 +251,10 @@ if __name__ == '__main__':
                         format='%(levelname)s:%(message)s')
 
     memory = atari2600.Memory.from_file(args.romfile)
+
+    if args.symbol:
+        for symbol, value in args.symbol:
+            memory.add_symbol(value, symbol)
 
     logging.info('Loaded memory %r' % memory)
 
