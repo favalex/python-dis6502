@@ -189,6 +189,16 @@ def dis(memory):
         while addr < memory.end and not memory.is_addr_executable(addr):
             annotations = memory.annotations[addr]
 
+            if '*' in annotations:
+                if bytes_on_current_line > 0:
+                    bytes_on_current_line = 0
+                    print
+
+                print 'L%04X ' % addr, '.wor', memory.addr_label(memory.get_word(addr))
+                addr += 2
+
+                continue
+
             if 'r' in annotations or 'w' in annotations:
                 if bytes_on_current_line > 0:
                     bytes_on_current_line = 0
@@ -236,6 +246,7 @@ def parse_args():
     parser.add_argument('--loglevel', default='warn', action='store', choices=('debug', 'info', 'warn'))
     parser.add_argument('--org', default=0xf000, type=smart_int)
     parser.add_argument('--code', type=smart_int, nargs='*')
+    parser.add_argument('--code_ref', type=smart_int, nargs='*')
     parser.add_argument('--symbol', type=pair, nargs='*')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--memory_dump', '-m', default=False, action='store_true')
@@ -258,7 +269,14 @@ if __name__ == '__main__':
 
     logging.info('Loaded memory %r' % memory)
 
-    starts = [memory.get_word(memory.end - 4)]
+    code_refs = [memory.end - 4]
+    if args.code_ref:
+        code_refs.extend(args.code_ref)
+
+    starts = []
+    for code_ref in code_refs:
+        memory.annotate(code_ref, '*')
+        starts.append(memory.get_word(code_ref))
 
     logging.info('Automatically found and supplied starts are %r' % map(hex, starts))
 

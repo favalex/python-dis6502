@@ -108,6 +108,8 @@ class Memory(object):
             annotations = self.annotations[addr]
             if size == 2:
                 return '$%02X' % addr
+            elif '*' in self.annotations[addr-1]:
+                return '%s+1' % self.addr_label(addr-1)
             elif self.has_addr(addr):
                 return 'L%04X' % addr
             else:
