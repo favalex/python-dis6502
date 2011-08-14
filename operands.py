@@ -111,11 +111,6 @@ class M_NONE(object):
     def __str__(self):
         return ''
 
-class M_AIND(object):
-    """JMP ($00A2)"""
-    def __init__(self, **kwargs):
-        self.addr = kwargs['addr']
-
 class M_REL(object):
     def __init__(self, **kwargs):
         self.offset = kwargs['offset']
@@ -188,3 +183,10 @@ class M_ZERY(AddrBase):
 
     def to_string(self, addr, memory):
         return super(M_ZERY, self).to_string(addr, memory) + ',Y'
+
+class M_AIND(AddrBase):
+    """JMP ($00A2)"""
+    size = 4
+
+    def to_string(self, addr, memory):
+        return '(%s)' % super(M_AIND, self).to_string(addr, memory)
