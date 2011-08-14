@@ -249,7 +249,7 @@ def parse_args():
 
     parser.add_argument('romfile', type=argparse.FileType('r'))
     parser.add_argument('--loglevel', default='warn', action='store', choices=('debug', 'info', 'warn'))
-    parser.add_argument('--org', default=0xf000, type=smart_int)
+    parser.add_argument('--org', default=None, type=smart_int)
     parser.add_argument('--code', type=smart_int, nargs='*')
     parser.add_argument('--code_ref', type=smart_int, nargs='*')
     parser.add_argument('--symbol', type=pair, nargs='*')
@@ -266,7 +266,7 @@ def main():
     logging.basicConfig(level=getattr(logging, args.loglevel.upper()),
                         format='%(levelname)s:%(message)s')
 
-    memory = atari2600.Memory.from_file(args.romfile)
+    memory = atari2600.Memory.from_file(args.romfile, args.org)
 
     if args.symbol:
         for symbol, value in args.symbol:
