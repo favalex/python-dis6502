@@ -17,6 +17,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import sys
 
 from collections import namedtuple
 
@@ -51,13 +52,17 @@ def Op(**kwargs):
 Instruction = namedtuple('Instruction', 'opcode src dst')
 Line = namedtuple('Line', 'label instruction comment')
 
+class UnknownOpcodeError(Exception):
+    def __str__(self):
+        return 'unknown opcode ' + self.message
+
 def dis_instruction(memory, addr):
     from table import TABLE
 
     try:
         opcode = TABLE[memory[addr]]
     except KeyError:
-        raise ValueError('Unknown opcode %02X at addr %04X' % (memory[addr], addr))
+        raise UnknownOpcodeError('%02X at addr %04X' % (memory[addr], addr))
 
     kwargs = {}
 
@@ -255,7 +260,7 @@ def parse_args():
 
     return parser.parse_args()
 
-if __name__ == '__main__':
+def main():
     args = parse_args()
 
     logging.basicConfig(level=getattr(logging, args.loglevel.upper()),
@@ -306,3 +311,12 @@ if __name__ == '__main__':
 
     if args.call_graph:
         memory.call_graph(*starts)
+
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception as e:
+        print e
+        sys.exit(1)
+    else:
+        sys.exit(0)

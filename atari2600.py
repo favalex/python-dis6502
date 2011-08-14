@@ -70,13 +70,17 @@ SYMBOLS = {
     0x0296: 'TIM64T',
 }
 
+class UnexpectedROMSizeError(Exception):
+    def __str__(self):
+        return 'unexpected ROM size ' + self.message
+
 class Memory(memory.Memory):
     @classmethod
     def from_file(cls, file_, org=None, symbols=None):
         memory = file_.read()
 
-        if len(memory) != 4096:
-            raise ValueError('Expected ROM size of 4096 bytes, found %d bytes' % len(memory))
+        if len(memory) not in (2048, 4096):
+            raise UnexpectedROMSizeError('%d bytes' % len(memory))
 
         if org is None:
             org = 0xf000 & ((ord(memory[-3]) << 8) + ord(memory[-4]))
