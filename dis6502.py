@@ -199,7 +199,7 @@ def dis(memory):
                     bytes_on_current_line = 0
                     print
 
-                print 'L%04X ' % addr, '.wor', memory.addr_label(memory.get_word(addr))
+                print 'L%04X ' % addr, '.word', memory.addr_label(memory.get_word(addr))
                 addr += 2
 
                 continue
