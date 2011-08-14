@@ -83,7 +83,7 @@ class Memory(memory.Memory):
             raise UnexpectedROMSizeError('%d bytes' % len(memory))
 
         if org is None:
-            org = 0xf000 & ((ord(memory[-3]) << 8) + ord(memory[-4]))
+            org = 0x10000 - len(memory)
 
         syms = SYMBOLS
 
