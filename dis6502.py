@@ -19,214 +19,7 @@
 import logging
 import sys
 
-from collections import namedtuple
-
 import atari2600
-
-from operands import *
-
-Opcode = namedtuple('Opcode', 'mnemonic src dst cycles size')
-
-def addr_mode_in(opcode, *modes):
-    if isinstance(opcode, dict):
-        src = opcode['src']
-        dst = opcode['dst']
-    else:
-        src = opcode.src
-        dst = opcode.dst
-
-    return (src in modes) or (dst in modes)
-
-def Op(**kwargs):
-    size = 1
-
-    if addr_mode_in(kwargs, M_ADDR, M_ABS, M_ABSX, M_ABSY, M_AIND):
-        size += 2
-    elif addr_mode_in(kwargs, M_IMM, M_INDX, M_INDY, M_REL, M_ZERO, M_ZERX, M_ZERY):
-        size += 1
-
-    kwargs['size'] = size
-
-    return Opcode(**kwargs)
-
-Instruction = namedtuple('Instruction', 'opcode src dst')
-Line = namedtuple('Line', 'label instruction comment')
-
-class UnknownOpcodeError(Exception):
-    def __str__(self):
-        return 'unknown opcode ' + self.message
-
-def dis_instruction(memory, addr):
-    from table import TABLE
-
-    try:
-        opcode = TABLE[memory[addr]]
-    except KeyError:
-        raise UnknownOpcodeError('%02X at addr %04X' % (memory[addr], addr))
-
-    kwargs = {}
-
-    if addr_mode_in(opcode, M_ADDR, M_ABS, M_ABSX, M_ABSY, M_AIND):
-        kwargs['addr'] = memory.get_word(addr+1)
-    elif addr_mode_in(opcode, M_IMM):
-        kwargs['immed'] = memory[addr+1]
-    elif addr_mode_in(opcode, M_INDX, M_INDY, M_REL):
-        kwargs['offset'] = memory[addr+1]
-    elif addr_mode_in(opcode, M_ZERO, M_ZERX, M_ZERY):
-        kwargs['addr'] = memory[addr+1]
-
-    return Instruction(opcode=opcode, src=opcode.src(**kwargs), dst=opcode.dst(**kwargs))
-
-def instrs(memory, addr, check_memory_type=False):
-    if addr is None:
-        addr = memory.start
-
-    while addr < memory.end:
-        if check_memory_type and not memory.is_addr_executable(addr):
-            break
-
-        instr = dis_instruction(memory, addr)
-        yield addr, instr
-        addr += instr.opcode.size
-
-def analyze_executable_memory(memory, starts):
-    seen_starts = set()
-
-    while starts:
-        next_starts = set()
-
-        for start in starts:
-            seen_starts.add(start)
-
-            for addr, instr in instrs(memory, start):
-                # memory access
-                if instr.opcode.src in (M_ADDR, M_ABSX, M_ABSY):
-                    memory.annotate(instr.src.addr, 'r')
-
-                if instr.opcode.dst in (M_ADDR, M_ABSX, M_ABSY):
-                    memory.annotate(instr.dst.addr, 'w')
-
-                # jumps and branches
-                if instr.opcode.src == M_REL:  # branches
-                    memory.annotate(addr, 'B')
-                    dest_addr = addr + instr.opcode.size + instr.src.offset
-                    memory.annotate(dest_addr, 'T')
-                    if memory.has_addr(dest_addr) and not dest_addr in seen_starts:
-                        next_starts.add(dest_addr)
-                elif instr.opcode.dst == M_PC:
-                    if instr.opcode.mnemonic == 'JSR':
-                        memory.annotate(instr.src.addr, 'J')
-                        if memory.has_addr(instr.src.addr) and not instr.src.addr in seen_starts:
-                            next_starts.add(instr.src.addr)
-                        memory.add_call(addr, instr.src.addr)
-                    elif instr.opcode.mnemonic == 'JMP':
-                        memory.annotate(addr, 'R')
-
-                        if instr.opcode.src != M_AIND:
-                            memory.annotate(addr, 'M')
-
-                            memory.annotate(instr.src.addr, 'J')
-                            if memory.has_addr(instr.src.addr) and not instr.src.addr in seen_starts:
-                                next_starts.add(instr.src.addr)
-                            memory.add_jump(addr, instr.src.addr)
-
-                        break
-                    else:
-                        if instr.opcode.mnemonic in ('RTS', 'RTI'):
-                            memory.annotate(addr, 'R')
-
-                        break
-
-            memory.add_executable_range(start, addr)
-
-        starts = next_starts
-
-def dis(memory):
-    addr = memory.start
-    while addr < memory.end:
-        instr = None
-        for addr, instr in instrs(memory, addr, check_memory_type=True):
-            if memory.symbols.has_key(addr):
-                print '%s' % memory.symbols[addr],
-            elif 'T' in memory.annotations[addr] or 'J' in memory.annotations[addr]:
-                print 'L%04X ' % addr,
-            else:
-                print '      ',
-
-            print instr.opcode.mnemonic, '  ',
-
-            try:
-                instr.src.to_string
-            except AttributeError:
-                src = str(instr.src)
-            else:
-                src = instr.src.to_string(addr, memory)
-
-            if src:
-                print src,
-            else:
-                if instr.opcode.mnemonic in 'ADC AND ASL BIT CMP CPX CPY DEC EOR INC JMP LDA LDX LDY LSR ORA ROL ROR SBC STA STX STY':
-                    stringer = repr
-                else:
-                    stringer = str
-
-                try:
-                    instr.dst.to_string
-                except AttributeError:
-                    dst = stringer(instr.dst)
-                    if dst == 'A':
-                        dst = ''
-                else:
-                    dst = instr.dst.to_string(addr, memory)
-
-                print dst,
-
-            print
-
-            if instr.opcode.mnemonic in ('RTS', 'RTI'):
-                print
-
-        if instr:
-            addr += instr.opcode.size
-
-
-        bytes_on_current_line = 0
-        while addr < memory.end and not memory.is_addr_executable(addr):
-            annotations = memory.annotations[addr]
-
-            if '*' in annotations:
-                if bytes_on_current_line > 0:
-                    bytes_on_current_line = 0
-                    print
-
-                print 'L%04X ' % addr, '.word', memory.addr_label(memory.get_word(addr))
-                addr += 2
-
-                continue
-
-            if 'r' in annotations or 'w' in annotations:
-                if bytes_on_current_line > 0:
-                    bytes_on_current_line = 0
-                    print
-
-                print 'L%04X  .byt' % addr,
-            else:
-                if bytes_on_current_line > 16:
-                    print
-                    bytes_on_current_line = 0
-
-                if bytes_on_current_line == 0:
-                    print '       .byt',
-                else:
-                    print ',',
-
-            print '$%02X' % memory[addr],
-
-            addr += 1
-            bytes_on_current_line += 1
-
-        if bytes_on_current_line > 0:
-            print
 
 def smart_int(s):
     if s.startswith('0x'):
@@ -292,7 +85,7 @@ def main():
     for start in starts[1:]:
         memory.add_symbol(start, 'L%04X' % start)
 
-    analyze_executable_memory(memory, starts)
+    memory.trace_code(starts)
 
     if args.memory_map:
         print memory.to_string()
@@ -307,7 +100,7 @@ def main():
 
         print '    code'
 
-        dis(memory)
+        memory.dis()
 
     if args.call_graph:
         memory.call_graph(*starts)
