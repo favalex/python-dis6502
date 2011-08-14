@@ -50,6 +50,7 @@ def parse_args():
     group.add_argument('--memory_map', '-m', default=False, action='store_true')
     group.add_argument('--call_graph', '-c', default=False, action='store_true')
     group.add_argument('--disassemble', '-d', default=False, action='store_true')
+    group.add_argument('--addr_info', '-a', default=None, type=smart_int)
 
     return parser.parse_args()
 
@@ -104,6 +105,10 @@ def main():
 
     if args.call_graph:
         memory.call_graph(*starts)
+
+    if args.addr_info:
+        addr = args.addr_info
+        print hex(addr), memory.addr_label(addr), memory.annotations[addr]
 
 if __name__ == '__main__':
     try:
