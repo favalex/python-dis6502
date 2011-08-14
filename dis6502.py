@@ -254,7 +254,7 @@ def parse_args():
     parser.add_argument('--code_ref', type=smart_int, nargs='*')
     parser.add_argument('--symbol', type=pair, nargs='*')
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--memory_dump', '-m', default=False, action='store_true')
+    group.add_argument('--memory_map', '-m', default=False, action='store_true')
     group.add_argument('--call_graph', '-c', default=False, action='store_true')
     group.add_argument('--disassemble', '-d', default=False, action='store_true')
 
@@ -294,7 +294,7 @@ def main():
 
     analyze_executable_memory(memory, starts)
 
-    if args.memory_dump:
+    if args.memory_map:
         print memory.to_string()
 
     if args.disassemble:
