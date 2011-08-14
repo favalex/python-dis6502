@@ -240,10 +240,10 @@ class Memory(object):
 
                 for addr, instr in self.instrs(start):
                     # memory access
-                    if instr.opcode.src in (M_ADDR, M_ABSX, M_ABSY):
+                    if instr.opcode.src in (M_ABS, M_ADDR, M_ABSX, M_ABSY):
                         self.annotate(instr.src.addr, 'r')
 
-                    if instr.opcode.dst in (M_ADDR, M_ABSX, M_ABSY):
+                    if instr.opcode.dst in (M_ABS, M_ADDR, M_ABSX, M_ABSY):
                         self.annotate(instr.dst.addr, 'w')
 
                     # jumps and branches
