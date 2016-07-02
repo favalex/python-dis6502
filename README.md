@@ -27,7 +27,7 @@ It has four output modes:
 ## ASCII memory map of the ROM
 
 char | meaning
-------------------------------
+---- | -----------------------
  [   | start of routine
  ]   | end of routine
  /   | branch instruction
