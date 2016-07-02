@@ -24,7 +24,7 @@ Label for an address. E.g. `--symbol BEEP=$f100`.
 
 It has four output modes:
 
-## ASCII memory map of the ROM
+## --memory_map: ASCII memory map of the ROM
 
 char | meaning
 ---- | -----------------------
@@ -59,7 +59,7 @@ F780:                                                                       r  r
 F800:  
 ````
 
-## Call graph
+## --call_graph: Call graph
 
 The output can be feed into [dot](https://en.wikipedia.org/wiki/DOT_(graph_description_language)) to generate an actual picture (e.g. `dot -T png Combat.dot >Combat.png`).
 
@@ -76,14 +76,14 @@ digraph G {
 …
 ````
 
-## Information about a specific memory address
+## --addr_info: Information about a specific memory address
 
 ````
 $ ./dis6502.py --org 0xf000 --addr_info 0xf083 Combat.bin
 0xf083 LF083 set(['J', 'r'])
 ````
 
-## Disassembly
+## --disassemble: Disassembly
 
 The output can be reassembled e.g. by [xa](http://www.floodgap.com/retrotech/xa/)
 
